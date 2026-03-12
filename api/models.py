@@ -1,6 +1,20 @@
 from django.db import models
+from django.contrib.auth.models import User
+
+class Profile(models.Model):
+    ROLE_CHOICES = [
+        ('Admin', 'Admin'),
+        ('Doctor', 'Doctor'),
+        ('Patient', 'Patient'),
+    ]
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='Patient')
+
+    def __str__(self):
+        return f"{self.user.username} - {self.role}"
 
 class Doctor(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='doctor_profile', null=True, blank=True)
     name = models.CharField(max_length=100)
     specialization = models.CharField(max_length=100)
     contact = models.CharField(max_length=15)
@@ -15,6 +29,7 @@ class Patient(models.Model):
         ('F', 'Female'),
         ('O', 'Other'),
     ]
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='patient_profile', null=True, blank=True)
     name = models.CharField(max_length=100)
     age = models.IntegerField()
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES)
@@ -40,3 +55,33 @@ class Appointment(models.Model):
 
     def __str__(self):
         return f"{self.patient.name} with {self.doctor.name} on {self.date}"
+
+class SystemLog(models.Model):
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    action = models.CharField(max_length=100)
+    description = models.TextField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.action} by {self.user} at {self.timestamp}"
+
+class HospitalSetting(models.Model):
+    key = models.CharField(max_length=50, unique=True)
+    value = models.TextField()
+    description = models.CharField(max_length=255, blank=True)
+
+    def __str__(self):
+        return self.key
+
+class Announcement(models.Model):
+    TYPE_CHOICES = [
+        ('Staff', 'Staff Announcement'),
+        ('Emergency', 'Emergency Alert'),
+    ]
+    title = models.CharField(max_length=200)
+    message = models.TextField()
+    type = models.CharField(max_length=20, choices=TYPE_CHOICES, default='Staff')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.title

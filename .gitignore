@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+db.sqlite3
+.env
+
+# Node
+node_modules/
+dist/
+.DS_Store
+.vscode/
+.idea/
+
+# Vite
+*.local
+dist-ssr
+*.mjs.map
+
+# Backend specific
+staticfiles/
+media/

@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Users, UserRound, Calendar, Activity, TrendingUp, Clock } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { doctorService, patientService, appointmentService } from '../services/api';
 
 const StatCard = ({ title, value, icon, color, trend }) => (
   <motion.div 
@@ -24,12 +25,37 @@ const StatCard = ({ title, value, icon, color, trend }) => (
 );
 
 const Dashboard = () => {
+  const [counts, setCounts] = useState({ patients: 0, doctors: 0, appointments: 0 });
+  const [recentApps, setRecentApps] = useState([]);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const [docRes, patRes, appRes] = await Promise.all([
+          doctorService.getAll(),
+          patientService.getAll(),
+          appointmentService.getAll()
+        ]);
+        setCounts({
+          doctors: docRes.data.length,
+          patients: patRes.data.length,
+          appointments: appRes.data.length
+        });
+        setRecentApps(appRes.data.slice(0, 3));
+      } catch (error) {
+        console.error('Error fetching dashboard stats:', error);
+      }
+    };
+    fetchStats();
+  }, []);
+
   const stats = [
-    { title: 'Total Patients', value: '1,284', icon: <Users size={24} />, color: 'bg-blue-500', trend: '+12%' },
-    { title: 'Active Doctors', value: '56', icon: <UserRound size={24} />, color: 'bg-purple-500', trend: '+4%' },
-    { title: 'Appointments Today', value: '42', icon: <Calendar size={24} />, color: 'bg-emerald-500', trend: '+8%' },
+    { title: 'Total Patients', value: counts.patients.toLocaleString(), icon: <Users size={24} />, color: 'bg-blue-500', trend: '+12%' },
+    { title: 'Active Doctors', value: counts.doctors.toLocaleString(), icon: <UserRound size={24} />, color: 'bg-purple-500', trend: '+4%' },
+    { title: 'Appointments Today', value: counts.appointments.toLocaleString(), icon: <Calendar size={24} />, color: 'bg-emerald-500', trend: '+8%' },
     { title: 'Operations', value: '12', icon: <Activity size={24} />, color: 'bg-orange-500', trend: '-2%' },
   ];
+
 
   return (
     <div className="space-y-8">
@@ -51,23 +77,27 @@ const Dashboard = () => {
             <button className="text-primary-600 text-sm font-semibold hover:underline">View All</button>
           </div>
           <div className="space-y-4">
-            {[1, 2, 3].map((_, i) => (
-              <div key={i} className="flex items-center justify-between p-4 border border-slate-50 rounded-xl hover:bg-slate-50 transition-colors">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-600 font-bold">
-                    P{i}
+            {recentApps.length === 0 ? (
+              <p className="text-slate-500 text-sm italic">No upcoming appointments.</p>
+            ) : (
+              recentApps.map((app, i) => (
+                <div key={app.id} className="flex items-center justify-between p-4 border border-slate-50 rounded-xl hover:bg-slate-50 transition-colors">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-600 font-bold uppercase">
+                      {app.patient_name[0]}
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-bold text-slate-900">{app.patient_name}</h4>
+                      <p className="text-xs text-slate-500">Checkup with Dr. {app.doctor_name}</p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="text-sm font-bold text-slate-900">John Doe</h4>
-                    <p className="text-xs text-slate-500">Checkup with Dr. Smith</p>
+                  <div className="text-right flex items-center gap-2 text-slate-500">
+                    <Clock size={14} />
+                    <span className="text-xs font-semibold">{app.time}</span>
                   </div>
                 </div>
-                <div className="text-right flex items-center gap-2 text-slate-500">
-                  <Clock size={14} />
-                  <span className="text-xs font-semibold">10:30 AM</span>
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
 

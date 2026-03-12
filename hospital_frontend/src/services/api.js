@@ -31,4 +31,17 @@ export const appointmentService = {
   delete: (id) => api.delete(`appointments/${id}/`),
 };
 
+export const adminService = {
+  getLogs: () => api.get('logs/'),
+  getSettings: () => api.get('settings/'),
+  getAnnouncements: () => api.get('announcements/'),
+  getUsers: () => api.get('users/'),
+  createAnnouncement: (data) => api.post('announcements/', data),
+  updateSetting: (key, data) => api.put(`settings/${key}/`, data),
+};
+
+export const systemService = {
+  getHealth: () => api.get('system-health/'),
+};
+
 export default api;
